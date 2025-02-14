@@ -64,11 +64,19 @@ class LinearRegressor:
         Returns:
             None: Modifies the model's coefficients and intercept in-place.
         """
-        # Replace this code with the code you did in the previous laboratory session
+        # Add a column of ones to the input data matrix X for the intercept term
+        column_intercept = np.ones((X.shape[0], 1))
+        X = np.hstack((column_intercept, X)) 
 
-        # Store the intercept and the coefficients of the model
-        self.intercept = None
-        self.coefficients = None
+        # Calculate the coefficients using the normal equation
+        X_transpose = np.transpose(X)
+
+        beta = np.linalg.inv(X_transpose @ X) @ X_transpose @ y
+        beta = np.dot(np.dot(np.linalg.inv(np.dot(X_transpose, X)), X_transpose), y)
+
+        # Separate the intercept and the coefficients
+        self.intercept = beta[0]
+        self.coefficients = beta[1:]
 
     def fit_gradient_descent(self, X, y, learning_rate=0.01, iterations=1000):
         """
@@ -85,25 +93,25 @@ class LinearRegressor:
         """
 
         # Initialize the parameters to very small values (close to 0)
-        m = len(y)
-        self.coefficients = (
-            np.random.rand(X.shape[1] - 1) * 0.01
-        )  # Small random numbers
+        n = len(y)
+        self.coefficients = np.random.rand(X.shape[1] - 1) * 0.01  # Small random numbers
         self.intercept = np.random.rand() * 0.01
 
-        # Implement gradient descent (TODO)
+        # Implement gradient descent
         for epoch in range(iterations):
-            predictions = None
+            predictions = self.predict(X[:, 1:])  # Exclude bias term for prediction
             error = predictions - y
 
-            # TODO: Write the gradient values and the updates for the paramenters
-            gradient = None
-            self.intercept -= None
-            self.coefficients -= None
+            # Calculate the gradient values and update the parameters
+            gradient_intercept = (2 / n) * np.sum(error)
+            gradient_coefficients = (2 / n) * np.dot(X[:, 1:].T, error)
 
-            # TODO: Calculate and print the loss every 10 epochs
-            if epoch % 1000 == 0:
-                mse = None
+            self.intercept -= learning_rate * gradient_intercept
+            self.coefficients -= learning_rate * gradient_coefficients
+
+            # Calculate and print the loss every 100 epochs
+            if epoch % 100 == 0:
+                mse = np.mean(error ** 2)
                 print(f"Epoch {epoch}: MSE = {mse}")
 
     def predict(self, X):
@@ -125,8 +133,11 @@ class LinearRegressor:
 
         if self.coefficients is None or self.intercept is None:
             raise ValueError("Model is not yet fitted")
-
-        return None
+        if np.ndim(X) == 1:
+            predictions = self.intercept + self.coefficients * X
+        else:
+            predictions = self.intercept + np.dot(X, self.coefficients)
+        return predictions
 
 
 def evaluate_regression(y_true, y_pred):
@@ -141,17 +152,18 @@ def evaluate_regression(y_true, y_pred):
         dict: A dictionary containing the R^2, RMSE, and MAE values.
     """
 
-    # R^2 Score
-    # TODO
-    r_squared = None
+    n = len(y_true)
+
+    rss = np.sum((y_true-y_pred)**2)
+    tss = np.sum((y_true-np.mean(y_true))**2)
+    r_squared = 1 - rss / tss 
 
     # Root Mean Squared Error
-    # TODO
-    rmse = None
+    mse = 1/n * np.sum((y_true-y_pred)**2)
+    rmse = np.sqrt(mse)
 
     # Mean Absolute Error
-    # TODO
-    mae = None
+    mae = 1/n * np.sum(abs(y_true-y_pred))
 
     return {"R2": r_squared, "RMSE": rmse, "MAE": mae}
 
