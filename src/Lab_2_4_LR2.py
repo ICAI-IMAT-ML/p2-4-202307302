@@ -64,15 +64,11 @@ class LinearRegressor:
         Returns:
             None: Modifies the model's coefficients and intercept in-place.
         """
-        # Add a column of ones to the input data matrix X for the intercept term
-        column_intercept = np.ones((X.shape[0], 1))
-        X = np.hstack((column_intercept, X)) 
 
         # Calculate the coefficients using the normal equation
         X_transpose = np.transpose(X)
 
         beta = np.linalg.inv(X_transpose @ X) @ X_transpose @ y
-        beta = np.dot(np.dot(np.linalg.inv(np.dot(X_transpose, X)), X_transpose), y)
 
         # Separate the intercept and the coefficients
         self.intercept = beta[0]
@@ -80,7 +76,7 @@ class LinearRegressor:
 
     def fit_gradient_descent(self, X, y, learning_rate=0.01, iterations=1000):
         """
-        Fit the model using either normal equation or gradient descent.
+        Fit the model using gradient descent.
 
         Args:
             X (np.ndarray): Independent variable data (2D array), with bias.
@@ -92,7 +88,6 @@ class LinearRegressor:
             None: Modifies the model's coefficients and intercept in-place.
         """
 
-        # Initialize the parameters to very small values (close to 0)
         n = len(y)
         self.coefficients = np.random.rand(X.shape[1] - 1) * 0.01  # Small random numbers
         self.intercept = np.random.rand() * 0.01
@@ -128,8 +123,6 @@ class LinearRegressor:
         Raises:
             ValueError: If the model is not yet fitted.
         """
-
-        # Paste your code from last week
 
         if self.coefficients is None or self.intercept is None:
             raise ValueError("Model is not yet fitted")
@@ -168,6 +161,8 @@ def evaluate_regression(y_true, y_pred):
     return {"R2": r_squared, "RMSE": rmse, "MAE": mae}
 
 
+import numpy as np
+
 def one_hot_encode(X, categorical_indices, drop_first=False):
     """
     One-hot encode the categorical columns specified in categorical_indices. This function
@@ -181,22 +176,18 @@ def one_hot_encode(X, categorical_indices, drop_first=False):
     Returns:
         np.ndarray: Transformed array with one-hot encoded columns.
     """
-    X_transformed = X.copy()
-    for index in sorted(categorical_indices, reverse=True):
-        # TODO: Extract the categorical column
-        categorical_column = None
+    X_transformed = np.array(X, dtype=object)  # Asegurar que es un array de objetos
+    
+    for index in sorted(categorical_indices, reverse=True):  # Procesar en orden inverso para no afectar los índices
+        categorical_column = X_transformed[:, index]  # Extraer la columna categórica
+        unique_values = np.unique(categorical_column)  # Obtener valores únicos
 
-        # TODO: Find the unique categories (works with strings)
-        unique_values = None
-
-        # TODO: Create a one-hot encoded matrix (np.array) for the current categorical column
-        one_hot = None
-
-        # Optionally drop the first level of one-hot encoding
         if drop_first:
-            one_hot = one_hot[:, 1:]
+            unique_values = unique_values[1:]  # Si drop_first=True, eliminamos el primer valor único
 
-        # TODO: Delete the original categorical column from X_transformed and insert new one-hot encoded columns
-        X_transformed = None
+        one_hots = np.array([[1 if element == value else 0 for value in unique_values] for element in categorical_column])
 
+        X_transformed = np.delete(X_transformed, index, axis=1)  # Eliminar la columna original
+        X_transformed = np.hstack((X_transformed[:, :index], one_hots, X_transformed[:, index:]))  # Insertar nuevas columnas correctamente
+    
     return X_transformed
