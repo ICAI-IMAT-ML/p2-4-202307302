@@ -39,7 +39,7 @@ class LinearRegressor:
                 f"Method {method} not available for training linear regression."
             )
         if np.ndim(X) == 1:
-            X = X.reshape(-1, 1)
+            X = X.reshape(-1, 1)    # Lo convierte en columna (la transpuesta de un 1D es un 1d itambién fila)
 
         X_with_bias = np.insert(
             X, 0, 1, axis=1
